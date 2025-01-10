@@ -95,6 +95,7 @@ def scan():
     # Scan the network using the network range found
     print("Scanning the network...")
     devices = scanNetwork(networkRange)
+    # devices = scanNetwork("192.168.12.1/24")
     if devices:
         print(f"Found {len(devices)} devices on the network.")
         for device in devices:
