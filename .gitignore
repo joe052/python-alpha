@@ -1,4 +1,4 @@
 # IGNORE THE VIRTUAL ENVIRONMENT
 /codes/net_env/
-
+.venv
 .ipynb_checkpoints/
