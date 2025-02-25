@@ -48,7 +48,7 @@ if __name__ == "__main__":
     data_directory = "D:\Joe Workspace\Github\python-alpha\cleaned-data\currency_pairs"
 
     # Use the full path to the file (in the same directory as the script)
-    output_filepath = os.path.join(current_directory, "forex_structured.csv")
+    output_filepath = os.path.join(current_directory, "structured_forex_data.csv")
 
     # Create a dummy data directory
     if not os.path.exists(data_directory):
