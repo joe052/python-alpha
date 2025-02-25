@@ -1,67 +1,59 @@
 import pandas as pd
-import urllib.parse
 import os
 
-# Function to load and clean the dataset
-def load_and_clean_dataset(file_path):
-    try:
-        #load dataset
-        dataset = pd.read_csv(file_path)
 
-# Clean summary and content columns
-        dataset['timestamp'] = dataset['timestamp'].apply(lambda x: ' '.join(eval(x)) if isinstance(eval(x), list) else x)
-        dataset['content'] = dataset['content'].apply(lambda x: ' '.join(eval(x)) if isinstance(eval(x), list) else x)
+def merge_forex_data(data_dir, output_file):
+    all_data = []
 
-# Replace 'nan' or empty lsits with None or an empty string
-        dataset['summary'] = dataset['summary'].apply(lambda x: None if x == 'nan' or x == '[]' else x)
-        dataset['content'] = dataset['content'].apply(lambda x: None if x == 'nan' or x == '[]' else x)
-        
-         # Remove leading zeros in all numeric columns (if any)
-        for column in dataset.select_dtypes(include=['object']).columns:
-            dataset[column] = dataset[column].apply(lambda x: x.lstrip('0') if isinstance(x, str) else x)
-
-# Function to check fif the url is valid
-        def is_valid_url(url):
+    for file_name in os.listdir(data_dir):
+        if file_name.startswith("forex_data_") and file_name.endswith(".csv"):
             try:
-                result = urllib.parse.urlparse(url)
-                return all([result.scheme, result.netloc])
-            except ValueError:
-                return False
+                parts = (
+                    file_name.replace("forex_data_", "").replace(".csv", "").split("_")
+                )
+                duration = parts[0]
+                currency_pair = "_".join(parts[1:])
 
-        # Apply the URL Validation
-        dataset ['url_valid'] = dataset['url'].apply(is_valid_url)
+                # Read data from csv
+                filepath = os.path.join(data_dir, file_name)
+                df = pd.read_csv(filepath)
 
-        # Structure the dataset
-        structured_dataset = dataset[['title', 'summary', 'content', 'url', 'url_valid']]
+                # Add durationd and currency pair columns
+                df["duration"] = duration
+                df["currency_pair"] = currency_pair
 
-        # Format the column names
-        structured_dataset.columns = ['Title', 'Summary', 'Content', 'URL', 'Is URL Valid']
+                all_data.append(df)
 
-        return structured_dataset
+            except Exception as e:
+                print(f"Error processing file {file_name}: {e}")
+        else:
+            print("Unexpected filename encountered")
+            return
 
-    except FileNotFoundError:
-        print(f"Error: The file at {file_path} was not found.")
-        return None
-    except  Exception as e:
-        print(f"An error occurred: {e}")
-        return None
+    # Concat all dataframes
+    if all_data:
+        merged_data = pd.concat(all_data, ignore_index=True)
 
-# Get the current directory (Where the script is running)
-current_directory = os.path.dirname(os.path.abspath(__file__))
-
-# Use the full path to the file (in the same directory as the script)
-file_path = os.path.join(current_directory, 'baseball_cleaned.csv') # Change the file name as needed.
-cleaned_dataset = load_and_clean_dataset(file_path)
-
-# Check if the dataset is valid before using it 
-if cleaned_dataset is not None:
-
-    # Save the cleaned dataset to a new CSV file
-    output_file_path = os.path.join(current_directory, 'structured_baseball_cleaned.csv') # rename to whatever fits best
-    cleaned_dataset.to_csv(output_file_path, index=False)
-    print(f"Dataset saved to {output_file_path}")
-    print(cleaned_dataset.head())
-else:
-    print("The dataset is not valid.")
+        # Write to output CSV
+        merged_data.to_csv(output_file, index=False)
+        print(f"Successfully merged data to {output_file}")
+    else:
+        print("No matching files found in the directory.")
 
 
+# MAIN
+if __name__ == "__main__":
+    # Get the current directory (Where the script is running)
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    data_directory = "D:\Joe Workspace\Github\python-alpha\cleaned-data\currency_pairs"
+
+    # Use the full path to the file (in the same directory as the script)
+    output_filepath = os.path.join(current_directory, "forex_structured.csv")
+
+    # Create a dummy data directory
+    if not os.path.exists(data_directory):
+        print("Path does not exist")
+        os.makedirs(data_directory)
+
+    # Execute code here
+    merge_forex_data(data_directory, output_filepath)
